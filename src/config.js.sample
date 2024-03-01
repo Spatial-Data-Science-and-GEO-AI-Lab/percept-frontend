@@ -16,4 +16,4 @@ const gdprControllerEmail = "My E-mail Address";
 // END OF CONFIGURATION
 
 // Export configuration:
-module.exports = { backendURL, buttonReenableTimeout, gdprControllerName, gdprControllerEmail }
+module.exports = { backendURL, buttonReenableTimeout, categoryChangeExtraTimeout, gdprControllerName, gdprControllerEmail }

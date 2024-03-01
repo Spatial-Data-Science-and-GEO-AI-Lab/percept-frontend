@@ -32,3 +32,6 @@ It correctly bundles React in production mode and optimizes the build for the be
 The build is minified and the filenames include the hashes.\
 The app is ready to be deployed!
 
+# License
+
+This project is released under the GNU GPL v3.0. Please see COPYING for more details.

@@ -1,0 +1,181 @@
+languageNativeName: Nederlands
+%
+gdprHeading: GDPR informatie
+%
+gdpr:
+Doel en wettelijke grondslag: de data verzameling is onderdeel van wetenschappelijk onderzoek
+om een model te maken hoe mensen straatbeelden ervaren. Dit onderzoek is gebaseerd op de AVG (GDPR), Artikel 6 (1) (a) 
+"de betrokkene heeft toestemming gegeven voor de verwerking van zijn persoonsgegevens voor een of 
+meer specifieke doeleinden" en (f) "gerechtvaardigde belang". Persoonsinformatie wordt veilig 
+opgeslagen, niet vrijgegeven en wordt vernietigd als het project klaar is in januari 2025.
+Gepseudonimiseerde gegevens met niet-persoonlijk identificeerbare links kunnen tien jaar bewaard
+worden voor de integriteit van het onderzoek. Rechten van betrokkene: Als onderwerp van onderzoek heeft 
+u verschillende rechten ten aanzien van de verwerkingsverantwoordelijke, in het bijzonder het 
+recht op toegang of het vernietigen van uw persoonlijke gegevens. Voor inlichtingen kunt u 
+contact opnemen met de verwerkingsverantwoordelijke via de aangeleverde contactgegevens.
+%
+aboutHTML:
+<p>
+  Dit project probeert beter te begrijpen hoe mensen straten en de omgeving in steden ervaren.
+</p>
+<ul>
+  <li>Zoals u kunt zien in de bovenstaande schermafbeeldingen als voorbeeld, laten we u foto's van straten zien en vragen we u om die straten te beoordelen op basis van een bepaald criterium, zoals begaanbaarheid als voetganger of de omgevingservaring.
+</li>
+  <li>Er zijn vijf keuzes voor elke beoordeling: vreselijk, slecht, neutraal, goed en uitmuntend.</li>
+  <li>Klik op een knop om de afbeelding te beoordelen volgens het criterium, of veeg de afbeelding naar de gewenste beoordeling. U kunt een afbeelding ook overslaan door omhoog te vegen.</li>
+  <li>Volg uw gevoel bij het selecteren van een beoordeling: we willen weten wat u vindt van elke gepresenteerde scène.</li>
+  <li>Als u een fout maakt, is er ook een knop Ongedaan maken om terug te keren naar de vorige foto.</li>
+  <li>Uw voortgang van elk criterium in de foto-enquête wordt onderaan het scherm weergegeven.</li>
+</ul>
+%
+thanksMessage1:
+Bedankt voor het beoordelen van <n> foto's!😃
+%
+thanksMessage2:
+😄 <n> foto's beoordeeld, ga zo door!
+%
+thanksMessage3:
+Wauw! <n> foto's beoordeeld, geweldig!⭐
+%
+thanksMessage4:
+Leuk! <n> foto's beoordeeld, bijna klaar!😁
+%
+thankYouAtEnd: Bedankt voor uw deelname!
+%
+finalText:
+We proberen beter te begrijpen hoe mensen straten en de omgeving in steden ervaren. Wij zijn u zeer erkentelijk voor uw bijdrage.
+%
+participate:
+Als u wilt deelnemen, vragen we u om de volgende enquête en toestemmingsformulier in te vullen voor het verzamelen van gegevens en het gebruik van een enkele webbrowsercookie om te helpen bij het verzamelen van gegevens.
+%
+ageLabel: Leeftijd
+%
+eduLabel: Opleidingsniveau
+%
+eduChoice1: Basis onderwijs
+%
+eduChoice2: Middelbaar onderwijs
+%
+eduChoice3: Vervolgopleiding (MBO/HBO/WO)
+%
+eduChoice4: WO+
+%
+genderLabel: Geslacht: hoe identificeert u zich?
+%
+genderChoice1: Vrouw
+%
+genderChoice2: Non-binair
+%
+genderChoice3: Man
+%
+genderChoice4: Omschrijf dit liever zelf
+%
+genderChoice5: Voorkeur om dit niet aan te geven
+%
+incomeLabel: Maandelijks bruto inkomen
+%
+postalLabel: Postcode thuisadres
+%
+countryLabel: Land van verblijf
+%
+consent1Label: Toestemming voor gegevens-verzameling?
+%
+consent2Label: Ja, ik geef toestemming voor het verzamelen van gegevens voor dit onderzoek en het gebruik van een webbrowsercookie.
+%
+submitLabel: Indienen
+%
+controller: Verwerkingsverantwoordelijke
+%
+email: E-mail
+%
+forGDPRInfoHTML:
+<p>Voor meer informatie zie: <a href="https://gdpr.eu/what-is-gdpr/" target="_blank">General Data Protection Regulation (GDPR)</a></p>
+%
+buttonDesc1: vreselijk
+%
+buttonDesc2: slecht
+%
+buttonDesc3: neutraal
+%
+buttonDesc4: goed
+%
+buttonDesc5: geweldig
+%
+walkabilityLabel: beloopbaarheid
+%
+walkabilityDesc:
+Ziet deze plek eruit als makkelijk begaanbaar en veilig voor voetgangers of voetgangers met hulp van een loophulpmiddel (bijv. een rolstoel)? Denk hierbij aan factoren zoals de kwaliteit van trottoirs, oversteekplaatsen voor voetgangers, het gehele straatontwerp en toegang tot openbare voorzieningen. Een voetgangersvriendelijke omgeving moedigt mensen aan om te gaan lopen of andere niet-gemotoriseerde vervoersmiddelen te gebruiken.
+%
+bikeabilityLabel: fietsbaarheid
+%
+bikeabilityDesc:
+Ziet deze plek er toegankelijk, aantrekkelijk, veilig en geschikt uit voor fietsers, of voor een aan de fiets vergelijkbaar mobiliteitshulpmiddel (bijv. scootmobiel)? Dit kunnen elementen zijn zoals fietspaden en fietsenstallingen, maar ook het gehele straatontwerp, kruispunten en de zichtbare omgeving.
+%
+pleasantnessLabel: aantrekkelijkheid
+%
+pleasantnessDesc:
+Ziet deze plek er plezierig of vriendelijk uit? Dit kunnen factoren zijn zoals de esthetiek van de omgeving, de kwaliteit van de lucht en verlichting, het geluidslandschap en de aanwezigheid van andere mensen of natuurlijke elementen.
+%
+greennessLabel: groenheid
+%
+greennessDesc:
+Beoordeel de zichtbare hoeveelheid vegetatie en groenelementen in een bepaalde omgeving. Het gaat hierbij de aanwezigheid van bomen, struiken, planten en andere natuurlijke elementen.
+%
+safetyLabel: veiligheid
+%
+safetyDesc:
+Ziet deze plek er al dan niet gevaarlijk uit, in termen van (persoonlijke) veiligheid? Denkt u dat het waarschijnlijk is dat u zich hier dag en nacht veilig voelt? Denk hierbij aan de aanwezigheid van elementen als verlichting, goed onderhoud, aanwezigheid van andere mensen en natuurlijk toezicht.
+%
+rateLabel: Beoordeel
+%
+skippedAlert: Overgeslagen!
+%
+undoAlert: Ongedaan maken!
+%
+skipLabel: overslaan
+%
+undoLabel: herstel
+%
+helpLabel: Hulp
+%
+backLabel: Terug
+%
+reportLabel: Meld een probleem of doe een suggestie
+%
+fullScreenAlert: Volledig scherm openen...
+%
+categoryCaption: Uw {categoryName} beoordeling: {rating}
+%
+averageText: Uw gemiddelde beoordelingen per categorie
+%
+reportEmailMessageHTML:
+Als u een probleem wilt melden, een suggestie wilt doen of een AVG GDPR-gerelateerde vraag heeft (zie hieronder voor meer informatie), schrijf dan naar: <a
+href="mailto:{gdprControllerEmail}">{gdprControllerEmail}</a> en voeg de volgende informatie toe
+%
+clipboardMessage: Klik op de tekst om deze naar het klembord te kopiëren
+%
+forYourReference: Ter referentie, dit is de afbeelding waar u naar keek
+%
+usageHeading: Gebruik
+%
+usageText:
+U krijgt één grote afbeelding te zien, een beoordelingscategorie en drie kleine afbeeldingen (die alleen aanwezig zijn om wat context en gevoel voor de plaats te geven en die geen ander doel dienen). Elke grote afbeelding kan worden beoordeeld op een 5-puntsschaal: vreselijk, slecht, neutraal, goed en uitmuntend. U kunt beoordelen door op de knoppen met smiley te klikken, of door de afbeelding naar een van de knoppen te vegen of te slepen. Omhoog vegen betekent dat u de huidige afbeelding wilt overslaan en naar de volgende wilt gaan. Er is ook een knop "Ongedaan maken" waarmee u de laatste actie ongedaan kunt maken.
+%
+keyboardHeading: Toetsenbord sneltoetsen
+%
+keyboardDesc: Als u een (fysiek) toetsenbord gebruikt, werken de volgende sneltoetsen
+%
+selectRating: selecteer uw beoordeling, van verschrikkelijk (1) tot uitmuntend (5)
+%
+pleaseSpecify: Gelieve te specificeren
+%
+approxIncome: Geschat inkomen
+%
+projectTitle: Straatbeeld beoordelen
+%
+screenshotAltText: Screenshot van de gebruikersinterface, met een straatbeeld boven vijf knoppen om deze te beoordelen.
+%
+closeLabel: Sluit
+%
+progressLabel: Voortgang
+%

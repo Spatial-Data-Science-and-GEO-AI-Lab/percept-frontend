@@ -1,0 +1,207 @@
+languageNativeName: English
+%
+gdprHeading: GDPR information
+%
+gdpr:
+Purpose and legal basis: data collection is taking place for the purpose of
+scientific research to create a model of human perception of street scenes,
+with basis under GDPR Article 6 (1) (a) Informed Consent and (f) Legitimate
+Interest. Personally-identifiable information data are being kept securely and
+will not be released, and will be deleted by the time the project completes, in
+January 2025. Pseudonymised data with no personally-identifiable linkages may
+be kept for ten years for the purpose of research integrity. Data Subject
+Rights: As a data subject you have several rights against the controller, in
+particular the right to request from the controller access to or erasure of
+your personal data. For enquiries, please get in touch with the controller
+using the provided contact information.
+%
+aboutHTML:
+<p>
+  This project is seeking to better understand how people perceive streets and surroundings in cities.
+</p>
+<ul>
+  <li>As you can see in the example screenshots above, we will show you photos of streets and ask you to rate those streets based on a given criterion, such as walkability or pleasantness.</li>
+  <li>There are five choices for each rating: awful, bad, neutral, good and great.</li>
+  <li>Please click on a button to rate the image according to the criterion, or swipe the image towards the desired rating. You can also skip an image by swiping up.</li>
+  <li>Follow your instincts when selecting a rating: we want to know how you feel about each presented scene.</li>
+  <li>In case you make a mistake, there is also an undo button to return to the previous photo.</li>
+  <li>Your progress through each criterion in the photo survey is shown at the bottom of the screen.</li>
+</ul>
+%
+thanksMessage1:
+Thanks for rating <n> photos so far!😃
+%
+thanksMessage2:
+😄 <n> photos rated, keep up the good work!
+%
+thanksMessage3:
+Wow! <n> photos rated, you're a star!⭐
+%
+thanksMessage4:
+Great work! <n> photos rated, almost done!😁
+%
+thankYouAtEnd: Thank you for your participation!
+%
+finalText:
+We are seeking to better understand how people perceive streets and surroundings in cities. Your input has been greatly appreciated.
+%
+participate:
+If you would like to participate, we ask you to fill out the following survey and consent form for data collection and the use of a single web browser cookie to help with the data collection.
+%
+ageLabel: Age
+%
+eduLabel: Education Level
+%
+eduChoice1: Primary
+%
+eduChoice2: Secondary
+%
+eduChoice3: Tertiary
+%
+eduChoice4: Postgraduate
+%
+genderLabel: Gender: how do you identify?
+%
+genderChoice1: Woman
+%
+genderChoice2: Non-binary
+%
+genderChoice3: Man
+%
+genderChoice4: Prefer to self-describe
+%
+genderChoice5: Prefer not to specify
+%
+incomeLabel: Monthly Gross Income
+%
+postalLabel: Home Postal Code
+%
+countryLabel: Country of Residence
+%
+consent1Label: Consent for data collection?
+%
+consent2Label: Yes, I consent to data collection for this research and the use of a web browser cookie.
+%
+submitLabel: Submit
+%
+controller: Controller
+%
+email: E-mail
+%
+forGDPRInfoHTML:
+<p>For more information see: <a href="https://gdpr.eu/what-is-gdpr/" target="_blank">General Data Protection Regulation (GDPR)</a></p>
+%
+buttonDesc1: awful
+%
+buttonDesc2: bad
+%
+buttonDesc3: neutral
+%
+buttonDesc4: good
+%
+buttonDesc5: great
+%
+walkabilityLabel: walkability
+%
+walkabilityDesc:
+Does this place look like an easy and safe place for people to travel on foot
+or using a walking-equivalent mobility aid (e.g. wheelchair)?  This might
+include factors such as the quality of sidewalks, pedestrian crossings, street
+connectivity, and access to public amenities. Walkable communities encourage
+people to walk or use other non-motorized modes of transportation.
+%
+bikeabilityLabel: bikeability
+%
+bikeabilityDesc:
+Does this place look accessible, attractive, safe and convenient for cycling as
+a mode of general-purpose transportation, or cycling-equivalent mobility aid
+(e.g.  mobility scooter)? This might include factors such as cycle lanes,
+tracks, and parking, as well as the overall design of streets, junctions and
+any visible surroundings.
+%
+pleasantnessLabel: pleasantness
+%
+pleasantnessDesc:
+Does this place look enjoyable or pleasing to the senses or emotions? This
+might include factors such as the aesthetics of the surroundings, the quality
+of the air and lighting, the soundscape, and the presence of other people or
+natural elements. 
+%
+greennessLabel: greenness
+%
+greennessDesc:
+Rate the apparent amount of vegetation and greenery in a given environment.
+This encompasses the presence of trees, shrubs, plants, and other natural
+elements. 
+%
+safetyLabel: safety
+%
+safetyDesc:
+Does this place look like you would feel protected from harm or danger, in
+terms of personal safety and security? Do you believe that it is likely that
+you would feel safe here at all times of day or night? This might include the
+presence of elements such as lighting, good maintenance, presence of other
+people and natural surveillance.
+%
+rateLabel: Rate
+%
+skippedAlert: Skipped!
+%
+undoAlert: Undo!
+%
+skipLabel: skip
+%
+undoLabel: undo
+%
+helpLabel: Help
+%
+backLabel: Back
+%
+reportLabel: Report a problem or make a suggestion
+%
+fullScreenAlert: Entering fullscreen mode...
+%
+categoryCaption: Your {categoryName} rating: {rating}
+%
+averageText: Your average ratings per category
+%
+reportEmailMessageHTML:
+If you have a problem to report, a suggestion to make, or a GDPR-related
+enquiry (see below for more information), then please write to: <a
+href="mailto:{gdprControllerEmail}">{gdprControllerEmail}</a> and include the following
+information
+%
+clipboardMessage: Click on the text to copy it to the clipboard
+%
+forYourReference: For your reference, this is the image you were looking at
+%
+usageHeading: Usage
+%
+usageText:
+You will be shown one large image, a rating category to consider, and three
+small images (which are only present to give some context and feeling for the
+place and do not serve any other purpose).  Each large image can be rated on a
+5-point scale: awful, bad, neutral, good and great. You can rate by clicking
+the buttons with smiley faces, or by swiping or dragging the image towards one
+of the buttons. Swiping up means that you want to skip the current image and go
+onto the next one.  There is also an undo button that lets you undo the last
+action.
+%
+keyboardHeading: Keyboard shortcuts
+%
+keyboardDesc: If you are using a (physical) keyboard then the following shortcuts will work
+%
+selectRating: select rating, from awful (1) to great (5)
+%
+pleaseSpecify: Please Specify
+%
+approxIncome: Approximate Income
+%
+projectTitle: Rating Street Views
+%
+screenshotAltText: Screenshot of the user interface, showing a street view above five buttons for rating it.
+%
+closeLabel: Close
+%
+progressLabel: Progress
+%

@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { Stack, Slide, Box, Typography, FormLabel, FormControl, FormControlLabel, FormGroup, TextField, RadioGroup, Radio, Grid, Paper, Button, styled, Checkbox } from "@mui/material";
 import React from "react";
-import { backendURL, buttonReenableTimeout, categoryChangeExtraTimeout, gdprControllerName, gdprControllerEmail } from "./config.js";
+import { backendURL, buttonReenableTimeout, categoryChangeExtraTimeout, gdprControllerName, gdprControllerEmail, maximumRatingsPerCategory, currency } from "./config.js";
 import Cookies from "js-cookie";
 import { Tooltip } from 'react-tooltip'
 import 'react-tooltip/dist/react-tooltip.css'
@@ -20,7 +20,31 @@ import intl from 'react-intl-universal';
 import enGB from './locales/en-GB.json';
 import nlNL from './locales/nl-NL.json';
 
-const maximumRatingsPerCategory = 20;
+
+//////////////////////////////////////////////////
+// Debugging utility function
+function debuglog(str) {
+  //  console.log(str);
+}
+const s = JSON.stringify;
+
+//////////////////////////////////////////////////
+// Cookie management
+const cookiename = 'perceptionsurvey';
+function usercookie_exists() {
+  return (Cookies.get(cookiename) != null);
+}
+function get_usercookie() {
+  return Cookies.get(cookiename);
+}
+function set_usercookie(val) {
+  Cookies.set(cookiename, val);
+}
+
+//////////////////////////////////////////////////
+// Locale support
+
+// Supported Locales
 const localeChoices = {
   'en-GB': {
     shortname: 'EN',
@@ -41,25 +65,17 @@ const localeChoices = {
 // data in { locale: json, ... } format
 const LOCALE_DATA = Object.assign({}, ...Object.entries(localeChoices).filter(([k, {enabled}]) => enabled).map(([k, {json}]) => ({ [k]: json })));
 
-function debuglog(str) {
-  //  console.log(str);
-}
-const s = JSON.stringify;
-
-const cookiename = 'perceptionsurvey';
-function usercookie_exists() {
-  return (Cookies.get(cookiename) != null);
-}
-function get_usercookie() {
-  return Cookies.get(cookiename);
-}
-function set_usercookie(val) {
-  Cookies.set(cookiename, val);
-}
-
+// Translation helper functions: insert text from current locale database,
+// either in plain text or HTML
 function t(k, params) { return intl.get(k, params); }
 function thtml(k, params) { return intl.getHTML(k, params); }
 
+function selectLocale(locale) {
+  intl.init({ currentLocale: locale, locales: LOCALE_DATA });
+}
+
+// Change the locale to `currentLanguage`, provided with a browser location
+// object and a continuation function `renav`.
 function updateLocale(location, currentLanguage, renav) {
   let params = new URLSearchParams(location.search);
   let locale = params.get("locale");
@@ -73,6 +89,7 @@ function updateLocale(location, currentLanguage, renav) {
   selectLocale(currentLanguage);
 }
 
+// Obtain the default locale from the location object, or 'en-GB' if all else fails.
 function defaultLocale(location) {
   if(location) {
     let params = new URLSearchParams(location.search);
@@ -82,24 +99,17 @@ function defaultLocale(location) {
   return 'en-GB';
 }
 
-function selectLocale(locale) {
-  intl.init({ currentLocale: locale, locales: LOCALE_DATA });
-}
-
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: "center",
-  color: theme.palette.text.secondary
-}));
+//////////////////////////////////////////////////
 
 // hack to workaround the fact that react-router-dom doesn't support access to
 // Location state inside loaders
 export const globalInfo = { age: "", consent: false };
 
+// Main page function, serves: /
 export function Index() {
+  // State var that is set when page initialization completes.
   const [initDone, setInitDone] = useState(false);
+  // Logic for radio button / form field for specifying gender.
   const [preferChecked, setPreferChecked] = useState(false);
   const [preferredGender, setPreferredGender] = useState('');
   const location = useLocation();
@@ -113,6 +123,7 @@ export function Index() {
 
   useEffect(() => { updateLocale(location, currentLanguage, renav); setInitDone(true); }, [location, currentLanguage]);
 
+  // submission of demographic pre-survey
   function handleSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.target);
@@ -127,10 +138,10 @@ export function Index() {
     globalInfo.gender = value['gender-radio-group'] === "other" ? preferredGender : value['gender-radio-group'];
 
     value.overrideCurrentLanguage = currentLanguage;
+    // Switch the page to the main body of the survey, the 'eval' part
     navigate("/eval?locale="+currentLanguage, { replace: true, state: value }	);
   }
 
-  const currency='€';
   const radioGroupStyle = {border: 1, marginTop: "5px", marginBottom: "5px", padding: "5px"};
   if (!initDone) { return <div></div>; }
   else {
@@ -181,6 +192,7 @@ export function Index() {
             <FormControlLabel value="woman" control={<Radio/>} label={t('genderChoice1')} onClick={() => setPreferChecked(false)} />
             <FormControlLabel value="non-binary" control={<Radio/>} label={t('genderChoice2')} onClick={() => setPreferChecked(false)} />
             <FormControlLabel value="man" control={<Radio/>} label={t('genderChoice3')} onClick={() => setPreferChecked(false)} />
+            // Activate the freeform text field when the radio button is checked, deactivate when another option is selected.
             <FormControlLabel control={<Radio checked={preferChecked}
                                               onClick={() => setPreferChecked(true)} value="other"
                                               label={t('genderChoice4')}/>}
@@ -242,6 +254,9 @@ export function Index() {
   }
 }
 
+//////////////////////////////////////////////////
+// Backend API interaction
+
 const backendFetchURL = backendURL + '/fetch';
 const backendGetSessionURL = backendURL + '/getsession';
 const backendNewPersonURL = backendURL + '/newperson';
@@ -250,6 +265,8 @@ const backendUndoURL = backendURL + '/undo';
 const backendGetStatsURL = backendURL + '/getstats';
 const backendCountRatingsByCategory = backendURL + '/countratingsbycategory';
 
+// General function to make a backend call, using one of the above URLs, and the supplied JSON.
+// Returns the response JSON or error JSON with field 'failed' = true.
 async function backendCall(url, json) {
   const response = await fetch(url, {
     method: 'POST',
@@ -265,6 +282,11 @@ async function backendCall(url, json) {
   }
 }
 
+//////////////////////////////////////////////////
+// Loaders (see the Router definition in index.js), which obtain necessary data
+// prior to the page being rendered.
+
+// Loader for the demographic preliminary survey
 export async function indexLoader() {
   if (usercookie_exists()) {
     const json = await backendCall(backendGetSessionURL, { cookie_hash: get_usercookie() });
@@ -275,6 +297,7 @@ export async function indexLoader() {
   return null;
 }
 
+// Loader for the report-a-problem page
 export async function reportLoader() {
   if (usercookie_exists()) {
     const json = await backendCall(backendGetSessionURL, { cookie_hash: get_usercookie() });
@@ -284,8 +307,10 @@ export async function reportLoader() {
   return redirect("/");
 }
 
+// Loader for the main survey page
 export async function evalLoader(globalInfo) {
   if (usercookie_exists()) {
+    // The participant is already in progress, so just retrieve the current session
     const json = await backendCall(backendGetSessionURL, { cookie_hash: get_usercookie() });
     debuglog(`getSession(${get_usercookie()}) => ${s(json)}`);
     if (json.session_id) {
@@ -294,9 +319,13 @@ export async function evalLoader(globalInfo) {
       return globalInfo;
     }
   }
+  // No cookie, or no session defined, so take the given data from the
+  // preliminary survey and make a new session.
   if (!globalInfo.consent) {
+    // Consent was not given to collect data, so go back to the start.
     return redirect("/");
   } else {
+    // Data from the preliminary survey:
     const args = {
       age: globalInfo.age, monthly_gross_income: globalInfo.income, education: globalInfo.education,
       gender: globalInfo.gender, country: globalInfo.country, postcode: globalInfo.postalcode,
@@ -307,12 +336,17 @@ export async function evalLoader(globalInfo) {
     if (json.failed) {
       return redirect('/');
     }
+    // New cookie created, new session started, reset session statistics:
     set_usercookie(json.cookie_hash);
     globalInfo.sessionStats = {averages: {}};
     return {...json,...globalInfo};
   }
 }
 
+//////////////////////////////////////////////////
+// Utility definitions
+
+// Styles for the numerous uses of Grid
 const gridStyles = {
   border: 0,
   backgroundColor: "white",
@@ -323,6 +357,7 @@ const gridStyles = {
   maxWidth: 'var(--primary-width)'
 };
 
+// The smiley buttons, encoded directly as UTF8 strings, and the localized text captions keys.
 const buttonDescs = [
   { smiley: "\u{1F626}", text: "buttonDesc1" },
   { smiley: "\u{1F641}", text: "buttonDesc2" },
@@ -331,6 +366,8 @@ const buttonDescs = [
   { smiley: "\u{1F603}", text: "buttonDesc5" }
 ];
 
+// Explicit table of categories by ID and with localized keys for the
+// shortnames and long descriptions.
 const categoryDescs = [
   { category_id: 1, shortname: 'walkabilityLabel' , description: 'walkabilityDesc' },
   { category_id: 2, shortname: 'bikeabilityLabel' , description: 'bikeabilityDesc' },
@@ -339,6 +376,7 @@ const categoryDescs = [
   { category_id: 5, shortname: 'safetyLabel'      , description: 'safetyDesc' }
 ];
 
+// Return a `num`-length list of items randomly picked from the array.
 function randompick(arr, num = 1) {
   const idxs = [];
   var idx;
@@ -352,18 +390,40 @@ function randompick(arr, num = 1) {
   return idxs.map((idx) => arr[idx]);
 }
 
+//////////////////////////////////////////////////
+// Several utility elements
 
+// Improved `Item` element
+const Item = styled(Paper)(({ theme }) => ({
+  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+  ...theme.typography.body2,
+  padding: theme.spacing(1),
+  textAlign: "center",
+  color: theme.palette.text.secondary
+}));
+
+// Improved `Button` element
+const PrefButton = styled(Button)({
+  textTransform: "none"
+});
+
+// The 'street view' element, showing the main street view image or a smaller
+// version, depending on the `centred` argument.
 function Streetview({ name, centred, id }) {
   const [loading, setLoading] = useState(true);
   const imgRef = useRef();
   useEffect(() => {
+    // If the image is not yet loaded when the page has finished loading, then
+    // set the status 'loading' to true so that a grey block is displayed.
     if(!imgRef.current.complete) setLoading(true);
   }, [name]);
   return <>
+    {/* While the image is being downloaded, display a grey block: */}
     <div style={{ display: loading ? "block" : "none",
                   width: centred ? "var(--primary-width)" : "120px",
                   height: centred ? "calc(var(--primary-width) * 3 / 4)" : "90px",
                   backgroundColor: "#dddddd" }} />
+    {/* When the image is finished loading, display the IMG element: */}
     <img
         onLoad={(e) => { setLoading(false); }}
         ref={imgRef}
@@ -377,12 +437,9 @@ function Streetview({ name, centred, id }) {
       />
     </>;
 }
- 
-const PrefButton = styled(Button)({
-  textTransform: "none"
-});
 
-
+// The element responsible for the (clickable) list of language abbreviations
+// at the top of the screen, so the user can switch languages/locales.
 function LanguageSelector({currentLanguage, setCurrentLanguage}) {
   return <ul className="languagelist">
      { Object.entries(localeChoices).filter(([k, {enabled}]) => enabled).map(([l, {shortname}]) => {
@@ -395,14 +452,17 @@ function LanguageSelector({currentLanguage, setCurrentLanguage}) {
     </ul>
 }
 
+//////////////////////////////////////////////////
+
+// Main page function, serves: /eval
 export function Eval() {
+  // State var that is set when page initialization completes.
   const [initDone, setInitDone] = useState(false);
   const location = useLocation();
-  //debuglog(`location.state=${s(location.state)}`);
   const loaderData = useLoaderData();
   const navigate = useNavigate();
-  //debuglog(`loaderData = ${s(loaderData)}`);
-  const [showImpressions, setShowImpressions] = useState(true);
+
+  // Logic for brief button-disabling effect (to prevent accidental double-clicks)
   const [buttonsDisabled, setButtonsDisabled, buttonsDisabledRef] = useState(false);
   let enableTimeoutID, timeoutPriority=0;
   function disableButtons() {
@@ -421,7 +481,12 @@ export function Eval() {
       }, buttonReenableTimeout+extraDelay);
     }
   }
+
+  // Tracking 'undo' information:
   const [undoInfo, setUndoInfo, undoInfoRef] = useState(null);
+  // Crucial state variable that tracks the current progress in the survey,
+  // including the current category, the current image (a.k.a. the 'fetch'), and the
+  // upcoming categories and images/fetches to rate:
   const [curView, setCurView, curViewRef] = useState({
     // queue of categories (shortname/id) to process next
     categoriesToRate: [],
@@ -432,19 +497,37 @@ export function Eval() {
     // currently shown image
     fetchToRate: {main_image: {url: '', image_id: 0}}
   });
-  const containerRef = useRef(null);
-  const [{ x: dragX, y: dragY }, api] = useSpring(() => ({ x: 0, y: 0 }));
-  const [highlightedButton, setHighlightedButton, highlightedButtonRef] = useState(-1);
-  const [tooltipIsOpen, setTooltipIsOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [alertBox, setAlertBox] = useState('');
-  const [alertProps, alertAPI] = useSpring(() => ({config: { friction: 120, tension: 280 }}));
-  const [flashProps, flashAPI] = useSprings(buttonDescs.length, () => ({config: { friction: 1200, tension: 280 }}));
-  const [categoryProgress, setCategoryProgress, categoryProgressRef] = useState({});
-  const [categoryShown, setCategoryShown, categoryShownRef] = useState({});
-  const [sessionStats, setSessionStats, sessionStatsRef] = useState(loaderData.sessionStats);
-  const [currentLanguage, setCurrentLanguage] = useState(defaultLocale(location));
 
+  const containerRef = useRef(null);
+
+  // State vars used by the animation feature (moving the image off/on-screen):
+  const [{ x: dragX, y: dragY }, api] = useSpring(() => ({ x: 0, y: 0 }));
+  // The rating button that gets pressed is briefly 'highlighted' as part of
+  // the animation, to make it clear to the participant what has just happened.
+  // The button index is `highlightedButton` and the `flashAPI` controls the
+  // animation of the highlight.
+  const [highlightedButton, setHighlightedButton, highlightedButtonRef] = useState(-1);
+  const [flashProps, flashAPI] = useSprings(buttonDescs.length, () => ({config: { friction: 1200, tension: 280 }}));
+  // State var tracking the status of the tooltip:
+  const [tooltipIsOpen, setTooltipIsOpen] = useState(false);
+  // State var tracking the status of the fullscreen feature:
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  // Alertbox is text that is displayed at the top of the screen:
+  const [alertBox, setAlertBox] = useState('');
+  // Animation state of the alertbox
+  const [alertProps, alertAPI] = useSpring(() => ({config: { friction: 120, tension: 280 }}));
+  // Table tracking the number of ratings that remain to be collected for each category:
+  const [categoryProgress, setCategoryProgress, categoryProgressRef] = useState({});
+  // Table tracking whether a category has been shown to the participant at
+  // all, because if not then we display the category tooltip (with
+  // description) the first time that the participant is exposed to the
+  // category, to ensure that they see the new category and criteria:
+  const [categoryShown, setCategoryShown, categoryShownRef] = useState({});
+  // State var to hold the session stats (mainly used to display stats at the end of the survey):
+  const [sessionStats, setSessionStats, sessionStatsRef] = useState(loaderData.sessionStats);
+
+  // Localization support:
+  const [currentLanguage, setCurrentLanguage] = useState(defaultLocale(location));
   function renav(loc) {
     navigate('/eval?locale='+loc, {replace: true, state: {
       curView: curView,
@@ -453,6 +536,7 @@ export function Eval() {
     }});
   }
 
+  // Set and animate temporary message at the top of the screen.
   function setAlert(msg) {
     const delay = 3000 + 1000 * msg.length / 8;
     alertAPI.stop();
@@ -463,16 +547,24 @@ export function Eval() {
     }});
   }
 
+  // Transmit the participant's selected rating to the backend, and animate the
+  // transition from the current photo to the next photo.
   async function sendRatingWithAnimation(rating) {
     if (rating > 0 && rating <= 5) {
-      const dir = (rating < 3 ? -1 : 1);
       flashAPI.start((i) => {
+        // Flash the background of the selected rating button only
+        // (buttons are numbered 0..4, while ratings are numbered 1..5)
         if (i !== rating-1) return;
         return { from: { backgroundColor: '#00ff00' }, to: { backgroundColor: 'rgba(0,0,0,0)' } };
       });
+      // Move the image left or right depending on the chosen rating.
+      const dir = (rating < 3 ? -1 : 1);
+      // Move the current image off the screen in 'dir' direction
       api.start({ x: (window.innerWidth + 200) * dir });
+      // Communicate with backend and await responses
       await sendRating(rating);
       await refresh();
+      // Move the new image onto the screen from '-dir' direction
       api.start({
         from: { x: (window.innerWidth + 200) * -dir },
         to: { x: 0 }
@@ -480,13 +572,19 @@ export function Eval() {
     }
   }
 
+  // Skip the current photo, do the animation and alerts accordingly.
   async function skipWithAnimation() {
     const fetch = curViewRef.current.fetchToRate;
     const category = curViewRef.current.categoryToRate;
+    // Flash a 'skipped' message on the screen
     setAlert(t('skippedAlert'));
+    // Move image off screen
     api.start({ y: -1 * (window.innerHeight + 200) });
+    // Set-up the undo info in case the user wants to undo the skip
     setUndoInfo({fetch, category, skipped: true});
+    // Get the next photo/category if necessary
     await refresh();
+    // Animate the new photo onto the screen
     api.start({
       from: { y: 1 * (window.innerHeight + 200) },
       to: { y: 0 }
@@ -503,6 +601,7 @@ export function Eval() {
     // Move the image around if it is currently being swiped ('down')
     api.start({ x: down ? mx : 0, y: down ? my : 0, immediate: down });
     if (active) {
+      // actively dragging the mouse/finger on screen
       setTooltipIsOpen(false);
       // If the user swipes the image back to the starting point then do nothing
       if(Math.abs(mx) < nullX && my < nullY && my >= skipY)
@@ -518,6 +617,8 @@ export function Eval() {
     } else {
       const rating = highlightedButton;
       if(rating >= 0) {
+        // A drag occurred and was released; the selected action is stored in highlightedButton state var.
+        // Temporarily disable buttons while performing the action, to avoid accidental double clicks/drags.
         disableButtons();
         if(my < skipY || rating === 0)
           await skipWithAnimation();
@@ -529,6 +630,8 @@ export function Eval() {
     }
   });
 
+  // Refresh the cached photos (fetches) and categories on the queue of upcoming ratings-to-do.
+  // Also update the progress bars and check if the override* state vars are set; if so then do them.
   async function refresh() {
     if(Object.keys(categoryProgress).length < categoryDescs.length) {
       const res = await backendCall(backendCountRatingsByCategory, { session_id: loaderData.session_id });
@@ -551,6 +654,11 @@ export function Eval() {
       if(location.state.overrideCurView) {
         setCurView(location.state.overrideCurView);
         location.state.overrideCurView = null;
+        // If we override the curView then it doesn't make sense to proceed
+        // with refreshFetches because the curView has just been configured
+        // specifically with a set of fetches; this is generally because we
+        // have returned to the main survey page (/eval) from some other page
+        // (e.g. by clicking the 'back' link on the /report or /help pages)
         window.history.replaceState({}, document.title);
         return;
       }
@@ -561,6 +669,8 @@ export function Eval() {
     refreshCategories();
   }
 
+  // Communicate with backend to retrieve the next batch of photos (fetches) to
+  // rate, if there are none remaining in the local cache.
   async function refreshFetches({debugname='refresh'}={}) {
     // perform async fetches outside of setCurView because setters get weird
     // when they are updated with async functions
@@ -580,31 +690,46 @@ export function Eval() {
     setCurView(curView => ({...curView, fetchToRate, fetchesToRate}));
   }
 
+  // Ensure the queue of categories to use when rating is kept up-to-date and
+  // progresses smoothly, repeating the same category 5 times before swapping
+  // to a different one. Ensure that no more than maximumRatingsPerCategory
+  // ratings are accepted for each category by checking the categoryProgress
+  // table. When categories change there will be an animation event facilitated
+  // by the Slide element (below, in the HTML), and this function complements
+  // that animation by waiting categoryChangeExtraTimeout seconds to reenable
+  // buttons and display the category tooltip (if this is the first time the
+  // participant has seen this category).
   function refreshCategories({debugname='refresh', checkProgressOnly=false}={}) {
     let { categoriesToRate, categoryToRate } = curViewRef.current;
     const prevCategory = categoryToRate;
-    // Filter out categories that have been completed already
+    // Look at the upcoming queue 'categoriesToRate' and filter out categories
+    // that have been completed already.
     const prog = categoryProgressRef.current;
-    //debuglog(`${debugname}: categoryProgress=${s(categoryProgressRef.current)}`);
     function f ({category_id}) {
       return !prog.hasOwnProperty(category_id) || prog[category_id] > 0
     }
-    //debuglog(`${debugname}: (0) categoriesToRate=${(categoriesToRate.map((c) => c?.shortname))}`);
     let filteredCategoriesToRate = categoriesToRate.filter(f);
-    //debuglog(`${debugname}: filteredCategoriesToRate=${(filteredCategoriesToRate.map((c) => c?.shortname))}`);
+    // 'filteredCategoriesToRate' contains a list of upcoming categories that
+    // still need participant ratings. Or it is empty.
 
     if (filteredCategoriesToRate.length === 0) {
+      // If it was empty then refill it with a randomly chosen unfinished category.
       const filteredCats = categoryDescs.filter(f);
       const randCats = randompick(filteredCats, filteredCats.length);
       categoriesToRate = randCats.flatMap((x) => [x, x, x, x, x]);
     } else
       categoriesToRate = filteredCategoriesToRate;
 
+    // Skip this part if we are only checking progress after a categoryProgress update.
     if (!checkProgressOnly || (categoryToRate && prog[categoryToRate.category_id] === 0)) {
+      // Get the next category from the list
       categoryToRate = categoriesToRate.pop();
       if (categoryToRate) {
         const id = categoryToRate.category_id;
+        // Check if this is a category change (prev != upcoming)
         const isCategoryChange = id !== prevCategory.category_id;
+        // If it is a change, the Slide element will initiate an animation, and
+        // this code complements that animation.
         if (isCategoryChange)
           disableButtons();
         if (!categoryShownRef.current[id] && (!prog.hasOwnProperty(id) || prog[id] === maximumRatingsPerCategory))
@@ -619,19 +744,17 @@ export function Eval() {
       }
     }
 
-    //debuglog(`${debugname}: categoryToRate=${(categoryToRate?.shortname)}`);
-    //debuglog(`${debugname}: categoriesToRate=${(categoriesToRate.map((c) => c?.shortname))}`);
-
     setCurView (curView => ({ ...curView, categoriesToRate, categoryToRate }));
   }
 
   useEffect(() => {
-    //debuglog(`useEffect [categoryProgress]`);
+    // Invoke the first part of refreshCategories whenever the categoryProgress table is updated.
     refreshCategories({debugname:'useEffect [categoryProgress]', checkProgressOnly:true});
   }, [categoryProgress]);
 
   useEffect(() => { updateLocale(location, currentLanguage, renav); setInitDone(true); }, [location, currentLanguage]);
 
+  // Update the categoryProgress table with the results from a backend API call
   function updateProgress(res) {
     if(!('category_counts' in res)) return;
     const progress = {};
@@ -644,6 +767,7 @@ export function Eval() {
     const categoriesToRate2 = categoriesToRate1.filter(({category_id}) => {
       return !progress.hasOwnProperty(category_id) || progress[category_id] > 0;
     });
+    // If the filtered list is shorter than the original list, some category has finished.
     if(categoriesToRate1.length !== categoriesToRate2.length)
       setCurView((curView) => {
         return {...curView, ...{
@@ -652,6 +776,7 @@ export function Eval() {
       });
   }
 
+  // Submit a rating to the backend and wait for response.
   async function sendRating(rating) {
     const catId = curViewRef.current.categoryToRate.category_id;
     const imgId = curViewRef.current.fetchToRate.main_image.image_id;
@@ -667,25 +792,32 @@ export function Eval() {
       debuglog('sendRating failed');
     }
     if (res['timestamp']) {
+      // Succeeded - configure the undo information, just in case
       const fetch = curViewRef.current.fetchToRate;
       const category = curViewRef.current.categoryToRate;
       setUndoInfo({fetch, category, skipped: false});
     }
+    // Pop up a thank-you message after every 20 ratings
     const n = res['session_rating_count'];
     if (n % 20 === 0 && n > 0) {
       const msgs = [ t('thanksMessage1'), t('thanksMessage2'), t('thanksMessage3'), t('thanksMessage4') ];
       const thankI = (Math.floor(n / 20) - 1) % msgs.length;
       setAlert(msgs[thankI].replace('<n>', n));
     }
+    // Update the category progress bars
     updateProgress(res);
+    // If all categories have been completed then prepare for the end of the
+    // survey by fetching some interesting stats from the backend.
     if(Object.values(categoryProgressRef.current).every(x => x === 0))
       setSessionStats(await backendCall(backendGetStatsURL, { session_id: loaderData.session_id }));
 
     return res['timestamp'];
   }
 
-
+  // Perform an 'undo' of a rating and communicate it to the backend; see
+  // undoRatingWithAnimation() for the client-side aspect.
   async function undoRating() {
+    // Undoing a 'skip' doesn't require backend interaction
     if (undoInfoRef.current.skipped) return 1;
     const args = {
       session_id: loaderData.session_id,
@@ -695,6 +827,7 @@ export function Eval() {
       debuglog('undoRating failed');
       return null;
     } else {
+      // Notify the user of successful undo and update the category progress bars
       setAlert(t('undoAlert'));
       updateProgress(res);
       return res['timestamp'];
@@ -723,13 +856,16 @@ export function Eval() {
     }
   }
 
+  // Things to do when first loading the page
   useEffect(() => {
+    // Prevent right-click in the main survey app window
     const handleContextMenu = (e) => {
       e.preventDefault();
     };
     const handleFullscreenChange = (e) => {
       setIsFullscreen(!!document.fullscreenElement);
     };
+    // Tilting the phone to the side is treated like clicking the 'go to fullscreen' button
     const handleOrientationChange = (e) => {
       if (e.currentTarget.type === 'landscape-primary' ||
           e.currentTarget.type === 'landscape-secondary') {
@@ -737,6 +873,7 @@ export function Eval() {
         setAlert(t('fullScreenAlert'));
       }
     };
+    // Apply the CSS selectors pertaining to the .eval class
     document.body.classList.add('eval');
     window.addEventListener('keyup', handleKeys);
     document.addEventListener('contextmenu', handleContextMenu);
@@ -745,13 +882,14 @@ export function Eval() {
       window.screen.orientation.onchange = handleOrientationChange;
     refresh();
     return () => {
+      // Return a function that cleans up the initialized resources
       window.removeEventListener('keydown', handleKeys);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       if (window.screen && window.screen.orientation)
         window.screen.orientation.unlock();
     };
-  }, []); // run-once with empty deps array
+  }, []); // run-once with empty deps array, see ReactJS docs
 
   async function handleUndoClick() {
     if(!undoInfoRef.current) return;
@@ -769,37 +907,41 @@ export function Eval() {
   }
 
   async function undoRatingWithAnimation() {
+    // Begin the animation
     api.start({ y: 1 * (window.innerHeight + 200) });
+    // Invoke the backend undo functionality
     const ts = await undoRating();
     if(ts) {
-      //debuglog(`handleUndoClick: undoInfo.fetch=${s(undoInfoRef.current.fetch)} .category=${undoInfoRef.current.category.shortname} .skipped=${undoInfoRef.current.skipped}`);
-      //debuglog(`handleUndoClick: categoryProgress=${s(categoryProgressRef.current)}`);
+      // If the undo succeeded then put the saved unfoInfo state (the fetch / the category) back onto the front of the queue
       setCurView((curView) => {
         return {...curView, ...{
           fetchesToRate: [...curView.fetchesToRate, curView.fetchToRate, undoInfoRef.current.fetch],
           categoriesToRate: [...curView.categoriesToRate, curView.categoryToRate, undoInfoRef.current.category]
         }};
       });
-      //debuglog(`handleUndoClick: categoriesToRate=${(curViewRef.current.categoriesToRate.map((c) => c?.shortname))}`);
       setUndoInfo(null);
       await refresh();
     }
+    // Animate the 'new' (undone) image into the central position on the screen
     api.start({
       from: { y: -1 * (window.innerHeight + 200) },
       to: { y: 0 }
     });
   }
 
+  // User clicked on the Report link
   function handleReportClick(event) {
     const value = { curView, undoInfo, currentLanguage };
     navigate("/report?locale="+currentLanguage, { replace: true, state: value }	);
   }
 
+  // User clicked on the Help link
   function handleHelpClick(event) {
     const value = { curView, undoInfo, currentLanguage };
     navigate("/help?locale="+currentLanguage, { replace: true, state: value }	);
   }
 
+  // User clicked on the Fullscreen button
   async function handleFullscreenClick() {
     if(!document.fullscreenElement) {
       await document.documentElement.requestFullscreen();
@@ -807,13 +949,14 @@ export function Eval() {
     } else document.exitFullscreen();
   }
 
-  //debuglog(`check for end: ${s(curViewRef.current.categoriesToRate.map(x => x?.shortname))}`);
-  //debuglog(`check for end: ${s(categoryProgress)}`);
-  //debuglog(`check for end: ${curViewRef.current.categoryToRate?.shortname} || ${categoryProgressRef.current[curViewRef.current.categoryToRate?.category_id]}`);
   if (!initDone) { return <div></div>; }
   else if (categoryProgressRef.current && Object.values(categoryProgressRef.current).length === categoryDescs.length && Object.values(categoryProgressRef.current).every(x => x === 0)) {
+    // If there is a categoryProgress table, if the length of the table is equal to the number of categories, and if every entry in the table is 0, then the survey is finished.
+    // (The Object.values(...) construction is a way to obtain the values of the properties of a JS object as a list)
     document.body.classList.remove('eval');
+    // Stats should be stored in a state var, they were updated during the backend communication process (e.g. to submit a rating)
     const stats = sessionStatsRef.current;
+    // Just in case there is something wrong with the final rated image, we help the user submit a report if they choose to do so.
     const reportInfo = `Reference number: ${loaderData.session_id}\nKey: ${get_usercookie().slice(0,8)}`;
     let avgs, minImages, maxImages;
     if (stats.hasOwnProperty('failed') && stats.failed) {
@@ -823,12 +966,15 @@ export function Eval() {
       maxImages = [];
     } else {
       avgs = stats.averages;
-      // add min/max annotations just in case the same entry shows up in both
-      // lists; React requires unique 'key' attributes in generated elements.
+      // add min/max annotations just in case the same image shows up in both
+      // min and max lists; React requires unique 'key' attributes in generated elements.
+      // By adding this extra field the elements are 'different' according to React
       minImages = stats.minImages?.map((x) => ({...x,...{type: 'min'}}));
       maxImages = stats.maxImages?.map((x) => ({...x,...{type: 'max'}}));
     }
+    // put both min and max images into one single list
     const images = minImages?.concat(maxImages) || [];
+    // Display the survey final page with some interesting stats
     return (<>
   <Helmet>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -840,6 +986,7 @@ export function Eval() {
         <p>{t('finalText')}</p>
       </Item>
       <Item elevation={0}>
+        {/* Marquee shows its internals on a sliding (repeating) window, like, well, a marquee. */}
         <Marquee pauseOnHover={true} pauseOnClick={true}>
         {images.map(({category_id: c_id, url, rating, type}) => {
             const c = categoryDescs.find(c => c.category_id === parseInt(c_id));
@@ -850,6 +997,7 @@ export function Eval() {
                    </Stack>;
         })}
         </Marquee>
+        {/* Show average ratings per category */}
         <p>{t('averageText')}:</p>
         <Grid container>
         {Object.entries(avgs).map(([c_id, avg]) => {
@@ -858,6 +1006,7 @@ export function Eval() {
           })}
         </Grid>
       </Item>
+      {/* Add a 'Report' link in case the user wants to make a report about the final image they saw */}
       <Item elevation={0}>
         {thtml('reportEmailMessageHTML', { gdprControllerEmail })}
       </Item>
@@ -873,6 +1022,7 @@ export function Eval() {
           InputProps={{readOnly: true}}/>
         <p>({t('clipboardMessage')})</p>
       </Item>
+      {/* GDPR info for the interest of the user */}
       <Item elevation={0}>
         <Typography variant="h5">{t('gdprHeading')}</Typography>
         <p>{t('gdpr')}</p>
@@ -884,13 +1034,15 @@ export function Eval() {
   </>
   )
   } else {
+    // The survey is NOT complete, show the main body of the survey
     return (<>
   <Helmet>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   </Helmet>
 
-  {/* Absolutely positioned elements */}
+  {/* Language selector (e.g. EN | NL) */}
   <LanguageSelector setCurrentLanguage={setCurrentLanguage} currentLanguage={currentLanguage} />
+  {/* The alert box with text messages goes in the upper centre of the screen */}
   <Box display="flex" justifyContent="center" style={{width: 'var(--primary-width)'}}>
     <animated.div style={{...alertProps,
                           backgroundColor: '#444444', color: 'white', fontSize: '12pt',
@@ -899,16 +1051,19 @@ export function Eval() {
                           position: 'absolute', display: alertBox.length > 0 ? 'inline' : 'none'}}
       >{alertBox}</animated.div>
   </Box>
+  {/* The skip button/link */}
   <div className="skipbutton">
     <PrefButton style={{padding: 0}} disabled={buttonsDisabled} onClick={handleSkipClick}>
       {"\u{2191}"+t('skipLabel')}
     </PrefButton>
   </div>
+  {/* The undo button/link */}
   <div className="undobutton">
     <PrefButton style={{padding: 0}} disabled={!undoInfo || buttonsDisabled} onClick={handleUndoClick}>
       {"\u{21B6}"+t('undoLabel')}
     </PrefButton>
   </div>
+  {/* The fullscreen button, drawn as an SVG in two different ways depending on fullscreen state */}
   <div className="fullscreenbutton">
     <PrefButton style={{ padding: 0, backgroundColor: 'rgba(0,0,0,0)' }} onClick={handleFullscreenClick}>
       <svg height="25px" version="1.1" viewBox="0 0 36 36" width="25px">
@@ -938,7 +1093,15 @@ export function Eval() {
     >
       <Grid item >
         <Item style={{ padding: 0, position: 'relative' }} elevation={0}>
+          {/* Show a transient rectangle on the screen when the user is dragging
+              the screen, we call this the 'skipbox' because it has the
+              (translated) word 'Skip' inside of it and its purpose is to show
+              the user where to drag the cursor/finger in order to invoke the
+               'skip' function using the drag interaction method. */}
           {highlightedButtonRef.current >= 0 && <div className="skipbox" style={highlightedButton == 0 ? {color: 'white', backgroundColor: 'green'} : {} }><Typography variant="h4">{t('skipLabel')}</Typography></div>}
+          {/* The centrepiece of the survey, the actual street view image that
+              is being rated, with its position animated by dragging when that
+              occurs: */}
           <animated.div id="main" {...bind()} style={{ x: dragX, y: dragY, touchAction: 'none' }}>
             <Streetview centred="1" name={curView.fetchToRate.main_image.url} />
           </animated.div>
@@ -946,7 +1109,14 @@ export function Eval() {
       </Grid>
       <Grid item container>
         <Grid item xs={11}>
-          {categoryDescs.map((c) => {
+          {
+          /* The part of the interface with the text that states 'Rate <category>' (albeit with translation)
+             The reasons for the complications here are: animation and tooltip
+             The Slide element animates the movement of the text and
+             automatically triggers when the curView.categoryToRate changes
+             (see the attribute in={curView.categoryToRate.category_id === id})
+             The tooltip has a similar trigger but also the variable tooltipIsOpen must be true. */
+          categoryDescs.map((c) => {
             const id = c.category_id, shortname = t(c.shortname), description = t(c.description);
             const dir = curView.categoryToRate.category_id === id ? "right" : "left";
             const timeout = buttonReenableTimeout + (curView.categoryToRate.category_id === id ? categoryChangeExtraTimeout : 0);
@@ -973,7 +1143,9 @@ export function Eval() {
       </Grid>
       <Grid item >
         <Grid item container xs spacing={0}>
-          {buttonDescs.map((bd, idx) => {
+          {
+          // The five rating buttons
+          buttonDescs.map((bd, idx) => {
             async function handleClick() {
               disableButtons();
               setTooltipIsOpen(false);
@@ -983,15 +1155,20 @@ export function Eval() {
             const buttonStyle = {
               borderStyle: 'solid',
               borderWidth: 4,
+              // The currently highlighted button gets a different border color
               borderColor: highlightedButtonRef.current === idx+1 ? '#00ff00' : 'rgba(0,0,0,0)',
               padding: 0,
               margin: 0,
               maxWidth: 'calc(var(--primary-width) / 5)'
             };
             return (
+              // After a button is clicked (or drag-activated) there is an
+              // animated 'flash' of the background to show the user which
+              // button was activated.
               <animated.div style={{borderRadius: 5, ...flashProps[idx]}} key={idx+1}>
                 <PrefButton style={{...buttonStyle}} disabled={buttonsDisabled} onClick={handleClick}>
                   <Stack spacing={0}>
+                    {/* Smileys are actually just the Unicode code points represented in UTF8 */}
                     <Item style={{fontSize: '28pt', padding: '2px', backgroundColor: 'rgba(0,0,0,0)'}} elevation={0}>{bd.smiley}</Item>
                     <Item style={{fontSize: '14pt', padding: '2px', backgroundColor: 'rgba(0,0,0,0)'}} elevation={0}>{t(bd.text)}</Item>
                   </Stack>
@@ -1003,6 +1180,8 @@ export function Eval() {
       </Grid>
     </Grid>
     <Grid item xs={12}>
+      {/* Draw a nice separator with the title 'Progress' (translated) in
+          between the rating buttons and the category progress bars */}
       <Item elevation={0} style={{padding: 0, paddingTop: '8px'}}>
         <svg height="15px" version="1.1" width="300px">
         <polyline points="0,7 100,7" stroke="black"/>
@@ -1018,6 +1197,7 @@ export function Eval() {
         if(id in categoryProgress)
           prog = categoryProgress[id];
         const bgCol = curView.categoryToRate.category_id === id ? '#6a1b9a' : '#aaa';
+        // For each category draw a progress bar based on the categoryProgress table
         return <Grid item xs={4} key={id}>
                  <Stack spacing={0}>
                    <Item elevation={0}>
@@ -1031,29 +1211,20 @@ export function Eval() {
       })
     }
     <Grid item xs={10} alignItems="left">
+      {/* Report button/link */}
       <Item style={{padding: 0, display: 'flex'}} elevation={0}>
-        {//<a style={{textDecoration: 'none', color: 'blue'}} href="/report" onClick={handleReportClick}>Report a problem or make a suggestion</a>
-        }
         <PrefButton style={{padding: 0}} onClick={handleReportClick}>
           {t('reportLabel')}
         </PrefButton>
       </Item>
     </Grid>
     <Grid item xs={2} alignItems="right">
+      {/* Help button/link */}
       <Item style={{padding: 0}} elevation={0}>
-        {//<a style={{textDecoration: 'none', color: 'blue'}} href="/report" onClick={handleReportClick}>Report a problem or make a suggestion</a>
-        }
         <PrefButton style={{padding: 0}} onClick={handleHelpClick}>
           {t('helpLabel')}
         </PrefButton>
       </Item>
-    </Grid>
-    <Grid item xs={12}>
-    {/*
-      <p><i>(debugging info)</i></p>
-      <p>{loaderData.age}, {loaderData.income}, {loaderData.education}, {loaderData.gender}, {loaderData.postalcode}, {loaderData.consent ? "consented" : "oops"}</p>
-      <p>{s(loaderData.categories)}</p>
-    */}
     </Grid>
   </Grid>
   </>
@@ -1085,7 +1256,9 @@ async function copyToClipboard(textToCopy) {
     }
 }
 
+// Main page function, serves: /report
 export function Report() {
+  // State var that is set when page initialization completes.
   const [initDone, setInitDone] = useState(false);
   const loaderData = useLoaderData();
   const location = useLocation();
@@ -1093,6 +1266,7 @@ export function Report() {
   const undoInfo = location.state?.undoInfo;
   const navigate = useNavigate();
   const [currentLanguage, setCurrentLanguage] = useState(location.state?.currentLanguage || defaultLocale(location));
+  // Go back to the main survey and restore the state that was saved when navigating to this page
   async function goBack() {
     navigate('/eval?locale='+currentLanguage, {replace: true, state: {
       overrideCurView: curView,
@@ -1115,6 +1289,7 @@ export function Report() {
 
   useEffect(() => { updateLocale(location, currentLanguage, renav); setInitDone(true); }, [location, currentLanguage]);
 
+  // Text for copy/paste convenience:
   const reportInfo = curView ? `Reference number: ${loaderData.session_id}\nKey: ${get_usercookie().slice(0,8)}\nImage ID: ${curView.fetchToRate.main_image.image_id}\nCategory: ${curView.categoryToRate.category_id}` : `Reference number: ${loaderData.session_id}\nKey: ${get_usercookie().slice(0,8)}`;
   if (!initDone) { return <div></div>; }
   else {
@@ -1130,6 +1305,7 @@ export function Report() {
       style={{...gridStyles, marginTop: 'var(--top-margin)'}}
     >
 
+      {/* Back button/link */}
       <Grid item xs={4}>
         <Box justifyContent="flex-start">
           <PrefButton onClick={goBack}>
@@ -1138,6 +1314,7 @@ export function Report() {
         </Box>
       </Grid>
 
+      {/* Show the report-making text */}
       <Grid item xs={12}>
         {thtml('reportEmailMessageHTML', { gdprControllerEmail })}
       </Grid>
@@ -1158,7 +1335,9 @@ export function Report() {
         </Grid>
       </Grid>
 
-      { curView ? <>
+      {
+      // Show the image that is being reported, for the user's interest:
+      curView ? <>
       <Grid item xs={4}>
         <Box justifyContent="flex-start">
           <p>{t('forYourReference')}:</p>
@@ -1176,6 +1355,7 @@ export function Report() {
       '' }
 
       <Grid item xs={12}>
+        {/* Show GDPR-related info */}
         <Item elevation={0}>
           <Typography variant="h5">{t('gdprHeading')}</Typography>
           <p>{t('gdpr')}</p>
@@ -1184,28 +1364,21 @@ export function Report() {
           <p className="gdprinfo"><a href="https://gdpr.eu/what-is-gdpr/" target="_blank">General Data Protection Regulation (GDPR)</a></p>
         </Item>
       </Grid>
-
-{/*
-      <Grid item xs={4}>
-        <Item>
-          <p>{s(curView.fetchToRate)}</p>
-          <p>{s(loaderData)}</p>
-          <p><a href="mailto:gdpr.percept.geo@uu.nl">gdpr.percept.geo@uu.nl</a></p>
-        </Item>
-      </Grid>
-      */}
     </Grid>
   </>;
   }
 }
 
+// Main page function, serves: /help
 export function Help() {
+  // State var that is set when page initialization completes.
   const [initDone, setInitDone] = useState(false);
   const location = useLocation();
   const curView = location.state?.curView;
   const undoInfo = location.state?.undoInfo;
   const [currentLanguage, setCurrentLanguage] = useState(location.state?.currentLanguage || defaultLocale(location));
   const navigate = useNavigate();
+  // Go back to the main survey and restore the state that was saved when navigating to this page
   async function goBack() {
     navigate('/eval?locale='+currentLanguage, {replace: true, state: {
       overrideCurView: curView,
@@ -1235,11 +1408,13 @@ export function Help() {
   </Helmet>
   <LanguageSelector setCurrentLanguage={setCurrentLanguage} currentLanguage={currentLanguage} />
   <Stack style={{...gridStyles, marginTop: 'var(--top-margin)'}}>
+    {/* The Back button/link */}
     <Box justifyContent="flex-start">
       <PrefButton onClick={goBack}>
         {"\u{2B05}"+t('backLabel')}
       </PrefButton>
     </Box>
+    {/* Example images and 'About' text (translated): */}
     <Item elevation={0}>
       <div style={{textAlign: 'center'}}>
         <img src="rate_sample1.jpg" height="200" />&nbsp;<img src="rate_sample2.jpg" height="200" />
@@ -1249,6 +1424,7 @@ export function Help() {
         {thtml('aboutHTML')}
       </div>
     </Item>
+    {/* Usage information text (translated) */}
     <Item elevation={0}>
       <Typography variant="h4">{t('usageHeading')}</Typography>
       <div className="help">

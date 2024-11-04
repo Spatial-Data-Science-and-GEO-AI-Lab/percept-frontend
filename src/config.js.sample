@@ -13,7 +13,13 @@ const gdprControllerName = "My Name";
 // The contact e-mail for said GDPR manager.
 const gdprControllerEmail = "My E-mail Address";
 
+// Number of times to ask a participant to rate images in a given category.
+const maximumRatingsPerCategory = 20;
+
+// Currency symbol to use.
+const currency='€';
+
 // END OF CONFIGURATION
 
 // Export configuration:
-module.exports = { backendURL, buttonReenableTimeout, categoryChangeExtraTimeout, gdprControllerName, gdprControllerEmail }
+module.exports = { backendURL, buttonReenableTimeout, categoryChangeExtraTimeout, gdprControllerName, gdprControllerEmail, maximumRatingsPerCategory, currency }
